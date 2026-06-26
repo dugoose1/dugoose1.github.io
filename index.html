@@ -1,10 +1,392 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Elayne's Portfolio</title>
-  </head>
-  <body>
-    <h1>Hi, I'm Elayne!</h1>
-    <p>Welcome to my portfolio.</p>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Elayne's Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* =====================
+       EDIT YOUR COLORS HERE
+       ===================== */
+    :root {
+      --bg:        #FAFAF7;
+      --text:      #1a1a1a;
+      --accent:    #5C7A5C;
+      --accent-lt: #8FAF8F;
+      --accent-bg: #D4E6D4;
+      --muted:     #888;
+      --border:    #e0e0d8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 5%;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+    }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 0 5%;
+      padding-top: 80px;
+    }
+    .hero-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      max-width: 700px;
+    }
+    .hero-line {
+      width: 3px;
+      height: 120px;
+      background: var(--accent);
+      flex-shrink: 0;
+      margin-top: 8px;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 600;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 480px;
+      margin-bottom: 2rem;
+    }
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn {
+      padding: 0.7rem 1.6rem;
+      border-radius: 2px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border: 1.5px solid var(--accent);
+    }
+    .btn-primary:hover { background: var(--accent-lt); border-color: var(--accent-lt); }
+    .btn-outline {
+      background: transparent;
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+    }
+    .btn-outline:hover { background: var(--accent-bg); }
+
+    /* SECTIONS */
+    section {
+      padding: 6rem 5%;
+      border-top: 1px solid var(--border);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      margin-bottom: 2rem;
+    }
+
+    /* ABOUT */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    .about-text p { color: #444; margin-bottom: 1rem; }
+    .about-stats { display: flex; flex-direction: column; gap: 1.2rem; }
+    .stat {
+      background: var(--accent-bg);
+      padding: 1.2rem 1.5rem;
+      border-left: 3px solid var(--accent);
+    }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--accent);
+    }
+    .stat-label { font-size: 0.85rem; color: var(--muted); }
+
+    /* SKILLS */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .skill-tag {
+      padding: 0.6rem 1rem;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      text-align: center;
+      color: var(--text);
+      background: white;
+      letter-spacing: 0.03em;
+    }
+    .skill-tag.learning {
+      border-color: var(--accent-lt);
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    /* PROJECTS */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .project-card {
+      border: 1px solid var(--border);
+      padding: 1.8rem;
+      background: white;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .project-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+    }
+    .project-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-bg);
+      padding: 0.2rem 0.6rem;
+      margin-bottom: 0.8rem;
+    }
+    .project-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+    .project-card p { font-size: 0.9rem; color: var(--muted); margin-bottom: 1.2rem; }
+    .project-links { display: flex; gap: 1rem; }
+    .project-links a {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--accent-lt);
+      padding-bottom: 1px;
+      transition: color 0.2s;
+    }
+    .project-links a:hover { color: var(--text); }
+
+    /* CONTACT */
+    .contact-inner {
+      max-width: 500px;
+    }
+    .contact-inner p { color: var(--muted); margin-bottom: 2rem; }
+    .contact-links { display: flex; flex-direction: column; gap: 1rem; }
+    .contact-link {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+      color: var(--text);
+      padding: 1rem 1.2rem;
+      border: 1px solid var(--border);
+      background: white;
+      transition: border-color 0.2s;
+    }
+    .contact-link:hover { border-color: var(--accent); }
+    .contact-link-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .contact-link-value { font-size: 0.95rem; }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 600px) {
+      .about-grid { grid-template-columns: 1fr; }
+      .nav-links { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">Elayne K.</div>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-line"></div>
+      <div>
+        <h1>Hi, I'm <span>Elayne.</span></h1>
+        <p>A first-year coder documenting my journey — one project at a time. I build things to learn, and share them to grow.</p>
+        <div class="hero-btns">
+          <a href="#projects" class="btn btn-primary">View Projects</a>
+          <a href="#contact" class="btn btn-outline">Get in Touch</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="section-label">Who I Am</div>
+    <div class="section-title">About Me</div>
+    <div class="about-grid">
+      <div class="about-text">
+        <p>I'm Elayne — a beginner coder who started this journey recently and hasn't looked back. I'm teaching myself how to build for the web, one project at a time.</p>
+        <p>This portfolio is a living document of my progress. It'll grow as I do — so check back often!</p>
+      </div>
+      <div class="about-stats">
+        <div class="stat">
+          <div class="stat-num">01</div>
+          <div class="stat-label">Projects completed</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">∞</div>
+          <div class="stat-label">Things left to learn</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="section-label">What I Know</div>
+    <div class="section-title">Skills</div>
+    <p style="color:var(--muted); margin-bottom:1.5rem; font-size:0.9rem;">
+      <span style="display:inline-block; width:12px; height:12px; background:var(--accent-bg); border:1px solid var(--accent-lt); margin-right:6px; vertical-align:middle;"></span>Currently learning
+    </p>
+    <div class="skills-grid">
+      <div class="skill-tag learning">HTML</div>
+      <div class="skill-tag learning">CSS</div>
+      <div class="skill-tag learning">JavaScript</div>
+      <div class="skill-tag learning">Git & GitHub</div>
+      <div class="skill-tag">VS Code</div>
+      <!-- Add more skills as you learn them! -->
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-label">What I've Built</div>
+    <div class="section-title">Projects</div>
+    <div class="projects-grid">
+
+      <div class="project-card">
+        <div class="project-tag">JavaScript</div>
+        <h3>Calculator</h3>
+        <p>A functional calculator built as one of my first JavaScript projects. Handles basic arithmetic operations.</p>
+        <div class="project-links">
+          <a href="https://github.com/dugoose1" target="_blank">GitHub →</a>
+          <!-- Uncomment below and add link once calculator is hosted:
+          <a href="#" target="_blank">Live Demo →</a>
+          -->
+        </div>
+      </div>
+
+      <!-- TEMPLATE: Copy and paste this block to add a new project -->
+      <!--
+      <div class="project-card">
+        <div class="project-tag">HTML / CSS</div>
+        <h3>Project Name</h3>
+        <p>Short description of what this project does and what you learned building it.</p>
+        <div class="project-links">
+          <a href="#" target="_blank">GitHub →</a>
+          <a href="#" target="_blank">Live Demo →</a>
+        </div>
+      </div>
+      -->
+
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="section-label">Say Hello</div>
+    <div class="section-title">Contact</div>
+    <div class="contact-inner">
+      <p>I'm always open to connecting — whether you want to collaborate, give feedback, or just say hi.</p>
+      <div class="contact-links">
+        <a href="https://github.com/dugoose1" target="_blank" class="contact-link">
+          <div>
+            <div class="contact-link-label">GitHub</div>
+            <div class="contact-link-value">github.com/dugoose1</div>
+          </div>
+        </a>
+        <a href="mailto:your@email.com" class="contact-link">
+          <div>
+            <div class="contact-link-label">Email</div>
+            <div class="contact-link-value">your@email.com</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © 2025 Elayne K. — Built from scratch with HTML & CSS.
+  </footer>
+
+</body>
 </html>
