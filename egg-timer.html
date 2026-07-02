@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Egg Timer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:          #faf8f0;
+      --butter:      #fefdb1;
+      --dark-yellow: #f0b86a;
+      --track:       #faf3d0;
+      --inner:       #faf8f0;
+      --ink:         #2c2a1a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(rgba(44,42,26,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(44,42,26,.04) 1px, transparent 1px);
+      background-size: 8px 8px;
+      font-family: 'Press Start 2P', monospace;
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 16px 48px;
+      user-select: none;
+    }
+
+    /* ── HEADER ── */
+    h1 {
+      font-size: clamp(18px, 5vw, 54px);
+      color: var(--butter);
+      -webkit-text-stroke: 1.5px #7a6020;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      text-shadow:
+        3px 3px 0 #d4a84a,
+        5px 5px 0 #c49030;
+      margin-bottom: 28px;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    /* ── TIMER ── */
+    #timer-wrap {
+      width:  min(50vh, 86vw);
+      height: min(50vh, 86vw);
+      position: relative;
+      cursor: crosshair;
+    }
+
+    #timer-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      display: block;
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      gap: 14px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pbtn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--ink);
+      background: var(--butter);
+      border: none;
+      padding: 11px 18px;
+      cursor: pointer;
+      outline: none;
+      box-shadow:
+        0 0 0 2.5px var(--ink),
+        3px 3px 0 0 var(--ink);
+      transition: box-shadow .07s, transform .07s;
+    }
+    .pbtn:hover  { background: #fffde0; }
+    .pbtn:active {
+      box-shadow: 0 0 0 2.5px var(--ink), 1px 1px 0 0 var(--ink);
+      transform: translate(2px, 2px);
+    }
+    .pbtn:disabled {
+      opacity: .38;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ── DONE FLASH ── */
+    #done-msg {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--ink);
+      background: var(--butter);
+      letter-spacing: 3px;
+      padding: 14px 22px;
+      opacity: 0;
+      pointer-events: none;
+      box-shadow:
+        0 0 0 2.5px var(--ink),
+        4px 4px 0 0 var(--ink);
+      text-align: center;
+      transform: scale(0.85);
+      transition: opacity .25s, transform .25s;
+      cursor: pointer;
+    }
+    #done-msg.show {
+      opacity: 1;
+      pointer-events: auto;
+      animation: doneBounce .5s ease forwards;
+    }
+    @keyframes doneBounce {
+      0%   { transform: scale(0.85); }
+      50%  { transform: scale(1.08); }
+      75%  { transform: scale(0.97); }
+      100% { transform: scale(1.0);  }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>EGG TIMER</h1>
+
+  <div id="timer-wrap">
+    <svg id="timer-svg" viewBox="0 0 300 300">
+      <defs>
+        <clipPath id="img-clip">
+          <path id="img-clip-path" />
+        </clipPath>
+      </defs>
+
+      <!-- outer track ring -->
+      <circle cx="150" cy="150" r="133" fill="var(--track)" />
+
+      <!-- pixel art image — visible only in the non-selected sector -->
+      <!-- replace the href value below with your base64 or URL image -->
+      <image id="pixel-img"
+             x="17" y="17" width="266" height="266"
+             href=""
+             clip-path="url(#img-clip)"
+             preserveAspectRatio="xMidYMid slice"
+             style="image-rendering:pixelated;" />
+
+      <!-- selected / remaining-time arc (yolk orange-yellow) -->
+      <path id="sel-arc" fill="var(--dark-yellow)" />
+
+      <!-- inner donut hole (narrower to give more room for pixel art) -->
+      <circle cx="150" cy="150" r="58" fill="var(--inner)" />
+
+      <!-- tick marks — sit on the outer track ring -->
+      <g id="ticks" />
+
+      <!-- center time display -->
+      <text id="time-text"
+            x="150" y="146"
+            text-anchor="middle" dominant-baseline="middle"
+            font-family="'Press Start 2P',monospace"
+            font-size="16" fill="var(--ink)">0:00</text>
+      <text x="150" y="163"
+            text-anchor="middle" dominant-baseline="middle"
+            font-family="'Press Start 2P',monospace"
+            font-size="8" fill="var(--ink)" opacity=".4">min</text>
+
+      <!-- 12 o'clock pixel anchor dot -->
+      <rect x="145" y="9" width="10" height="10" fill="var(--ink)" opacity=".45" rx="0"/>
+
+      <!-- draggable pixel handle -->
+      <rect id="handle"
+            x="142" y="14" width="16" height="16"
+            fill="var(--butter)"
+            stroke="var(--ink)" stroke-width="2.5"
+            rx="0"
+            style="cursor:grab;" />
+    </svg>
+  </div>
+
+  <div class="controls">
+    <button class="pbtn" id="play-btn">▶ START</button>
+    <button class="pbtn" id="reset-btn">↺ RESET</button>
+  </div>
+
+  <div id="done-msg">✦ TIME'S UP! ✦</div>
+
+  <script>
+    /* ── constants ── */
+    const CX = 150, CY = 150;
+    const R    = 133;  // outer track / handle / tick radius
+    const MAX_SEC = 10 * 60; // 10 minutes = full circle
+
+    /* ── state ── */
+    let remaining = 0;
+    let running   = false;
+    let dragging  = false;
+    let ticker    = null;
+
+    /* ── refs ── */
+    const svg        = document.getElementById('timer-svg');
+    const selArc     = document.getElementById('sel-arc');
+    const imgClipPth = document.getElementById('img-clip-path');
+    const handle     = document.getElementById('handle');
+    const timeText   = document.getElementById('time-text');
+    const playBtn    = document.getElementById('play-btn');
+    const resetBtn   = document.getElementById('reset-btn');
+    const doneMsg    = document.getElementById('done-msg');
+
+    /* ── geometry ── */
+    function toXY(deg, r) {
+      const rad = (deg - 90) * Math.PI / 180;
+      return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
+    }
+
+    function fullCircle(r) {
+      return `M ${CX} ${CY - r} A ${r} ${r} 0 1 1 ${CX - 0.001} ${CY - r} Z`;
+    }
+
+    function sector(startDeg, endDeg, r) {
+      const diff = endDeg - startDeg;
+      if (diff <= 0.01)   return '';
+      if (diff >= 359.99) return fullCircle(r);
+      const s  = toXY(startDeg, r);
+      const e  = toXY(endDeg, r);
+      const lg = diff > 180 ? 1 : 0;
+      return `M ${CX} ${CY} L ${s.x} ${s.y} A ${r} ${r} 0 ${lg} 1 ${e.x} ${e.y} Z`;
+    }
+
+    /* ── render ── */
+    function render() {
+      const deg = (remaining / MAX_SEC) * 360;
+
+      selArc.setAttribute('d', deg > 0.01 ? sector(0, deg, R) : '');
+
+      imgClipPth.setAttribute('d',
+        deg < 0.01   ? fullCircle(R) :
+        deg > 359.99 ? ''            :
+        sector(deg, 360, R)
+      );
+
+      // handle stays on outer track ring for easy grabbing
+      const hp = toXY(deg, R);
+      handle.setAttribute('x', hp.x - 8);
+      handle.setAttribute('y', hp.y - 8);
+
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      timeText.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    /* ── drag ── */
+    function angleFromEvent(e) {
+      const rect = svg.getBoundingClientRect();
+      const scX  = 300 / rect.width, scY = 300 / rect.height;
+      const src  = e.touches ? e.touches[0] : e;
+      const dx   = (src.clientX - rect.left) * scX - CX;
+      const dy   = (src.clientY - rect.top)  * scY - CY;
+      let a = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+      if (a < 0) a += 360;
+      return a;
+    }
+
+    function applyDrag(e) {
+      if (!dragging) return;
+      e.preventDefault();
+      const a   = angleFromEvent(e);
+      remaining = Math.round((a / 360) * MAX_SEC);
+      remaining = Math.max(0, Math.min(remaining, MAX_SEC));
+      doneMsg.classList.remove('show');
+      render();
+    }
+
+    handle.addEventListener('mousedown',  e => { dragging = true; e.stopPropagation(); });
+    handle.addEventListener('touchstart', e => { dragging = true; e.stopPropagation(); }, { passive: false });
+
+    svg.addEventListener('mousedown', e => { if (e.target !== handle) { dragging = true; applyDrag(e); } });
+    svg.addEventListener('touchstart', e => { if (e.target !== handle) { dragging = true; applyDrag(e); } }, { passive: false });
+
+    document.addEventListener('mousemove', applyDrag);
+    document.addEventListener('touchmove', applyDrag, { passive: false });
+    document.addEventListener('mouseup',  () => { dragging = false; });
+    document.addEventListener('touchend', () => { dragging = false; });
+
+    /* ── playback ── */
+    playBtn.addEventListener('click', () => {
+      if (remaining === 0) return;
+      if (running) {
+        clearInterval(ticker);
+        running = false;
+        playBtn.textContent = '▶ RESUME';
+      } else {
+        running = true;
+        playBtn.textContent = '⏸ PAUSE';
+        ticker = setInterval(() => {
+          if (remaining > 0) {
+            remaining--;
+            render();
+          } else {
+            clearInterval(ticker);
+            running = false;
+            playBtn.textContent = '▶ START';
+            onComplete();
+          }
+        }, 1000);
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      clearInterval(ticker);
+      running   = false;
+      remaining = 0;
+      playBtn.textContent = '▶ START';
+      doneMsg.classList.remove('show');
+      render();
+    });
+
+    /* ── completion ── */
+    function onComplete() {
+      doneMsg.classList.add('show');
+
+      // arc flicker
+      let n = 0;
+      const fl = setInterval(() => {
+        selArc.style.opacity = n++ % 2 ? '1' : '0.15';
+        if (n > 9) { clearInterval(fl); selArc.style.opacity = '1'; }
+      }, 220);
+
+      // whimsical chime — ascending arpeggio with a little trill at the end
+      try {
+        const ac = new AudioContext();
+
+        // notes: C5, E5, G5, C6, then a quick E6 trill
+        const melody = [
+          { freq: 523.25, t: 0,    dur: 0.18 },  // C5
+          { freq: 659.25, t: 0.18, dur: 0.18 },  // E5
+          { freq: 784.00, t: 0.36, dur: 0.18 },  // G5
+          { freq: 1046.5, t: 0.54, dur: 0.35 },  // C6  (longer)
+          { freq: 1174.7, t: 0.80, dur: 0.12 },  // D6  trill 1
+          { freq: 1046.5, t: 0.93, dur: 0.12 },  // C6  trill 2
+          { freq: 1174.7, t: 1.06, dur: 0.22 },  // D6  trill 3 (final)
+        ];
+
+        melody.forEach(({ freq, t, dur }) => {
+          const osc  = ac.createOscillator();
+          const gain = ac.createGain();
+          // mix sine + a touch of triangle for warmth
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          gain.gain.setValueAtTime(0, ac.currentTime + t);
+          gain.gain.linearRampToValueAtTime(0.22, ac.currentTime + t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + dur);
+          osc.start(ac.currentTime + t);
+          osc.stop(ac.currentTime + t + dur + 0.05);
+        });
+      } catch (_) {}
+    }
+
+    /* ── tick marks ── */
+    (function drawTicks() {
+      const g = document.getElementById('ticks');
+      for (let i = 0; i < 60; i++) {
+        const a     = (i / 60) * 360;
+        const major = i % 6 === 0;
+        const outer = toXY(a, R);
+        const inner = toXY(a, major ? R - 15 : R - 7);
+
+        const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        ln.setAttribute('x1', outer.x); ln.setAttribute('y1', outer.y);
+        ln.setAttribute('x2', inner.x); ln.setAttribute('y2', inner.y);
+        ln.setAttribute('stroke', 'var(--ink)');
+        ln.setAttribute('stroke-width', major ? 2.5 : 1.5);
+        ln.setAttribute('opacity', major ? '0.5' : '0.22');
+        g.appendChild(ln);
+
+        if (major && i > 0) {
+          const lp  = toXY(a, R - 26);
+          const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          txt.setAttribute('x', lp.x); txt.setAttribute('y', lp.y);
+          txt.setAttribute('text-anchor', 'middle');
+          txt.setAttribute('dominant-baseline', 'middle');
+          txt.setAttribute('font-family', "'Press Start 2P',monospace");
+          txt.setAttribute('font-size', '7');
+          txt.setAttribute('fill', 'var(--ink)');
+          txt.setAttribute('opacity', '0.45');
+          txt.textContent = i / 6;
+          g.appendChild(txt);
+        }
+      }
+    })();
+
+    doneMsg.addEventListener('click', () => doneMsg.classList.remove('show'));
+
+    render();
+  </script>
+</body>
+</html>
