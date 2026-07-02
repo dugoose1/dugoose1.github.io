@@ -203,6 +203,15 @@
     let running   = false;
     let dragging  = false;
     let ticker    = null;
+    let audioCtx  = null;
+
+    // Unlock audio on first interaction (required by Safari)
+    document.addEventListener('click', () => {
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+            audioCtx.resume();
+        }
+    }, { once: true });
 
     /* ── refs ── */
     const svg        = document.getElementById('timer-svg');
@@ -335,7 +344,7 @@
 
       // whimsical chime — ascending arpeggio with a little trill at the end
       try {
-        const ac = new AudioContext();
+        const ac = audioCtx || new AudioContext();
 
         // notes: C5, E5, G5, C6, then a quick E6 trill
         const melody = [
