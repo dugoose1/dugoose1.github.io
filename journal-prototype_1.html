@@ -103,7 +103,7 @@
   .tab.tab-stickers .dot{background:#c98a3f;}
 
   .page{
-    position:absolute; inset:0; padding:34px 40px 34px 46px; overflow-y:auto;
+    position:absolute; inset:0; padding:64px 40px 34px 46px; overflow-y:auto;
     opacity:0; transform:translateX(14px); pointer-events:none;
     transition:opacity .28s ease, transform .28s ease;
   }
@@ -221,6 +221,8 @@
   }
   .ai-btn:hover{ background:#8f451f; }
   .ai-btn:disabled{ opacity:0.6; cursor:default; }
+  .storage-warning{ font-family:'Special Elite', monospace; font-size:0.65rem; color:var(--rust); margin-top:6px; display:none; }
+  .save-note{ font-family:'Special Elite', monospace; font-size:0.62rem; color:var(--ink-soft); margin-top:6px; }
   #aiResult{ font-family:'Libre Baskerville', serif; font-size:0.78rem; color:var(--ink); line-height:1.6; }
   #aiResult h4{ font-family:'Special Elite', monospace; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--ink-soft); margin:10px 0 4px; }
   #aiResult h4:first-child{ margin-top:0; }
@@ -315,6 +317,8 @@
             <div id="aiResult" style="display:none;"></div>
           </div>
           <button class="save-btn" id="saveBtn">save entry &amp; mark today</button>
+          <div class="storage-warning" id="storageWarning">this device's storage is full — try removing a photo or two so today's entry can save.</div>
+          <div class="save-note">saved entries stay on this device/browser, even after refreshing or closing the tab.</div>
         </div>
       </div>
     </section>
@@ -352,6 +356,7 @@ function switchTab(name){
 tabs.forEach(tab=>{
   tab.addEventListener('click', ()=> switchTab(tab.dataset.page));
 });
+document.getElementById('coverTitle').addEventListener('blur', ()=> saveState());
 
 // ---------- font switcher ----------
 const fontOptions = [
@@ -365,6 +370,7 @@ fontBtn.addEventListener('click', ()=>{
   fontIdx = (fontIdx+1) % fontOptions.length;
   document.documentElement.style.setProperty('--font-display', fontOptions[fontIdx].css);
   fontBtn.textContent = `Aa · ${fontOptions[fontIdx].name}`;
+  saveState();
 });
 
 // ---------- sticker library (defaults now, your drawn stickers slot in later) ----------
@@ -427,11 +433,93 @@ document.getElementById('stickerUpload').addEventListener('change', (e)=>{
       stickerLibrary.push({type:'image', val:ev.target.result});
       renderTray();
       renderStickerGrid();
+      saveState();
     };
     reader.readAsDataURL(file);
   });
   e.target.value = '';
 });
+
+// ---------- persistence (saves to this browser, no login needed) ----------
+const STORAGE_KEY = 'marginalia-journal-v1';
+
+function showStorageWarning(){
+  const warn = document.getElementById('storageWarning');
+  if(!warn) return;
+  warn.style.display = 'block';
+  setTimeout(()=>{ warn.style.display = 'none'; }, 4500);
+}
+
+function saveState(){
+  const canvasEl = document.getElementById('coverCanvas');
+  const rect = canvasEl.getBoundingClientRect();
+  const placedStickers = [...canvasEl.querySelectorAll('.cover-sticker')].map(el=>{
+    const glyph = el.querySelector('.sticker-glyph');
+    const isImg = glyph.tagName === 'IMG';
+    return {
+      type: isImg ? 'image' : 'emoji',
+      val: isImg ? glyph.getAttribute('src') : glyph.textContent,
+      leftPct: (parseFloat(el.style.left) / rect.width) * 100,
+      topPct: (parseFloat(el.style.top) / rect.height) * 100,
+      scale: el.dataset.scale || '1'
+    };
+  });
+  const state = {
+    loggedDays,
+    coverTitle: document.getElementById('coverTitle').value,
+    fontIdx,
+    stickerLibrary,
+    placedStickers
+  };
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e){
+    console.warn('save failed (likely storage full from images):', e);
+    showStorageWarning();
+  }
+}
+
+function placeStickerFromSaved(s){
+  const canvasEl = document.getElementById('coverCanvas');
+  const el = document.createElement('div');
+  el.className = 'cover-sticker';
+  el.dataset.scale = s.scale || '1';
+  el.innerHTML = (s.type === 'image')
+    ? `<img class="sticker-glyph" src="${s.val}"><div class="sticker-toolbar"><button class="st-btn st-minus">−</button><button class="st-btn st-plus">+</button><button class="st-btn st-del">🗑</button></div>`
+    : `<span class="sticker-glyph">${s.val}</span><div class="sticker-toolbar"><button class="st-btn st-minus">−</button><button class="st-btn st-plus">+</button><button class="st-btn st-del">🗑</button></div>`;
+  canvasEl.appendChild(el);
+  attachInteractions(el);
+  const rect = canvasEl.getBoundingClientRect();
+  el.style.left = (s.leftPct / 100 * rect.width) + 'px';
+  el.style.top = (s.topPct / 100 * rect.height) + 'px';
+  el.style.transform = 'translate(-50%,-50%)';
+  el.querySelector('.sticker-glyph').style.transform = `scale(${s.scale || 1})`;
+}
+
+function loadState(){
+  let raw;
+  try{ raw = localStorage.getItem(STORAGE_KEY); } catch(e){ return; }
+  if(!raw) return;
+  let state;
+  try{ state = JSON.parse(raw); } catch(e){ return; }
+
+  if(state.loggedDays) Object.assign(loggedDays, state.loggedDays);
+  if(state.coverTitle) document.getElementById('coverTitle').value = state.coverTitle;
+  if(typeof state.fontIdx === 'number' && fontOptions[state.fontIdx]){
+    fontIdx = state.fontIdx;
+    document.documentElement.style.setProperty('--font-display', fontOptions[fontIdx].css);
+    document.getElementById('fontToggle').textContent = `Aa · ${fontOptions[fontIdx].name}`;
+  }
+  if(Array.isArray(state.stickerLibrary) && state.stickerLibrary.length){
+    stickerLibrary = state.stickerLibrary;
+  }
+  renderTray();
+  renderStickerGrid();
+  renderCalendar();
+  if(Array.isArray(state.placedStickers)){
+    state.placedStickers.forEach(placeStickerFromSaved);
+  }
+}
 
 // ---------- cover: draggable, selectable, resizable, deletable stickers ----------
 const canvas = document.getElementById('coverCanvas');
@@ -461,6 +549,7 @@ function trayStart(e){
     document.removeEventListener('touchmove', onMove);
     document.removeEventListener('touchend', onUp);
     el.style.cursor = 'grab';
+    saveState();
   }
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup', onUp);
@@ -492,7 +581,7 @@ function attachInteractions(el){
     function onUp(){
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      if(!moved) selectSticker(el);
+      if(!moved) selectSticker(el); else saveState();
     }
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
@@ -511,7 +600,7 @@ function attachInteractions(el){
     function onEnd(){
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onEnd);
-      if(!moved) selectSticker(el);
+      if(!moved) selectSticker(el); else saveState();
     }
     document.addEventListener('touchmove', onMove, {passive:false});
     document.addEventListener('touchend', onEnd);
@@ -520,11 +609,12 @@ function attachInteractions(el){
   el.addEventListener('wheel', e=>{
     e.preventDefault();
     resizeSticker(el, e.deltaY < 0 ? 0.1 : -0.1);
+    saveState();
   }, {passive:false});
 
-  el.querySelector('.st-minus').addEventListener('click', e=>{ e.stopPropagation(); resizeSticker(el, -0.15); });
-  el.querySelector('.st-plus').addEventListener('click', e=>{ e.stopPropagation(); resizeSticker(el, 0.15); });
-  el.querySelector('.st-del').addEventListener('click', e=>{ e.stopPropagation(); el.remove(); });
+  el.querySelector('.st-minus').addEventListener('click', e=>{ e.stopPropagation(); resizeSticker(el, -0.15); saveState(); });
+  el.querySelector('.st-plus').addEventListener('click', e=>{ e.stopPropagation(); resizeSticker(el, 0.15); saveState(); });
+  el.querySelector('.st-del').addEventListener('click', e=>{ e.stopPropagation(); el.remove(); saveState(); });
 }
 
 function resizeSticker(el, delta){
@@ -660,24 +750,60 @@ imgInput.addEventListener('change', (e)=>{
 });
 
 const today = new Date();
-document.getElementById('writeDateLabel').textContent =
-  today.toLocaleDateString('default',{month:'long', day:'numeric', year:'numeric'}).toLowerCase();
+const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+const baseDateLabel = today.toLocaleDateString('default',{month:'long', day:'numeric', year:'numeric'}).toLowerCase();
 renderPageIndicator();
+
+function updateWriteStatus(){
+  const btn = document.getElementById('saveBtn');
+  const label = document.getElementById('writeDateLabel');
+  if(loggedDays[todayKey]){
+    btn.textContent = "update today's entry";
+    label.textContent = `${baseDateLabel} — already logged, edits below will update it`;
+  } else {
+    btn.textContent = 'save entry & mark today';
+    label.textContent = baseDateLabel;
+  }
+}
+
+function loadTodayEntryIfExists(){
+  const saved = loggedDays[todayKey];
+  if(!saved) { updateWriteStatus(); return; }
+  entryPages = (saved.pages && saved.pages.length)
+    ? saved.pages.map(p=>({ text: p.text || '', images: p.images || [] }))
+    : [{text:'', images:[]}];
+  currentPageIdx = 0;
+  entryText.value = entryPages[0].text;
+  renderImgStrip();
+  renderPageIndicator();
+  maybeShowSpaceHint();
+  selectedTags.clear();
+  (saved.tags || []).forEach(t => selectedTags.add(t));
+  document.querySelectorAll('.tag-chip').forEach(chip=>{
+    chip.classList.toggle('selected', selectedTags.has(chip.textContent));
+  });
+  updateWriteStatus();
+}
 
 document.getElementById('saveBtn').addEventListener('click', ()=>{
   entryPages[currentPageIdx].text = entryText.value;
-  const key = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-  loggedDays[key] = {
+  loggedDays[todayKey] = {
     pages: entryPages.map(p=>({text:p.text, images:p.images})),
     tags: [...selectedTags]
   };
   calYear = today.getFullYear(); calMonth = today.getMonth();
   renderCalendar();
+  updateWriteStatus();
   const btn = document.getElementById('saveBtn');
-  const original = btn.textContent;
+  const settledLabel = btn.textContent;
   btn.textContent = 'saved ✓';
-  setTimeout(()=>btn.textContent = original, 1400);
+  setTimeout(()=>btn.textContent = settledLabel, 1400);
+  saveState();
 });
+
+// restore whatever was saved on this device, if anything
+loadState();
+loadTodayEntryIfExists();
 
 // ---------- AI analysis (real call, this is the actual pattern/theme feature) ----------
 function escapeHtml(str){
