@@ -196,6 +196,14 @@
   .write-side{ flex:1; display:flex; flex-direction:column; gap:16px; }
   .page-indicator{ display:flex; align-items:center; gap:10px; font-family:'Special Elite', monospace; font-size:0.7rem; color:var(--ink-soft); margin-bottom:8px; }
   .page-indicator button{ background:none; border:1px solid rgba(74,54,39,0.3); border-radius:4px; padding:2px 8px; cursor:pointer; font-family:inherit; color:var(--ink); }
+  .live-toggle{ display:flex; align-items:center; gap:6px; font-family:'Special Elite', monospace; font-size:0.65rem; color:var(--ink-soft); margin-bottom:8px; user-select:none; cursor:pointer; }
+  .live-toggle input{ accent-color:var(--rust); cursor:pointer; }
+  .live-reflection{
+    margin-top:8px; min-height:22px; font-family:var(--font-display); font-size:1.2rem; color:var(--ink-soft);
+    opacity:0; transform:translateY(4px); transition:opacity .5s ease, transform .5s ease; line-height:1.3; pointer-events:none;
+  }
+  .live-reflection.visible{ opacity:0.85; transform:translateY(0); }
+  .live-reflection-text::before{ content:"✎ "; opacity:0.6; }
   #addPageBtn{ margin-left:auto; }
   textarea.entry{
     flex:1; resize:none; border:none;
@@ -235,6 +243,39 @@
   .sticker-slot.filled{ border-style:solid; background:rgba(255,255,255,0.5); padding:6px; }
   .sticker-upload{ margin-top:18px; font-family:'Special Elite', monospace; font-size:0.7rem; color:var(--ink-soft); border:1px dashed rgba(74,54,39,0.3); border-radius:8px; padding:12px; text-align:center; cursor:pointer; }
   .sticker-upload:hover{ color:var(--rust); border-color:var(--rust); }
+  .emoji-add-row{ display:flex; gap:8px; margin-top:6px; max-width:420px; }
+  #emojiInput{
+    flex:1; font-family:'Libre Baskerville', serif; font-size:1.05rem; padding:8px 10px;
+    border:1.5px solid rgba(74,54,39,0.3); border-radius:8px; background:rgba(255,255,255,0.4);
+    color:var(--ink); outline:none;
+  }
+  #emojiAddBtn{
+    font-family:'Special Elite', monospace; font-size:0.72rem; background:var(--ink); color:var(--paper);
+    border:none; border-radius:6px; padding:0 14px; cursor:pointer;
+  }
+  #emojiAddBtn:hover{ background:var(--rust); }
+  .emoji-hint{ font-family:'Special Elite', monospace; font-size:0.62rem; color:var(--ink-soft); margin-top:6px; }
+  #emojiChips{ margin-top:12px; }
+  .emoji-popover{
+    display:none; position:absolute; bottom:66px; left:50%; transform:translateX(-50%);
+    width:260px; background:var(--paper); border:1px solid rgba(74,54,39,0.25); border-radius:10px;
+    padding:16px; box-shadow:0 10px 24px rgba(0,0,0,0.28); z-index:20;
+  }
+  .emoji-popover.open{ display:block; }
+  .emoji-popover-title{ font-family:'Special Elite', monospace; font-size:0.65rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--ink-soft); margin-bottom:10px; }
+  .emoji-popover-close{
+    position:absolute; top:8px; right:10px; background:none; border:none; cursor:pointer;
+    font-family:'Special Elite', monospace; color:var(--ink-soft); font-size:1rem; line-height:1;
+  }
+  .emoji-popover-close:hover{ color:var(--rust); }
+  .emoji-popover .emoji-add-row{ max-width:none; margin-top:0; }
+  .emoji-chip{
+    display:inline-flex; align-items:center; gap:4px; font-size:1.1rem;
+    background:rgba(255,255,255,0.4); border:1px solid rgba(74,54,39,0.25); border-radius:14px;
+    padding:4px 6px 4px 10px; margin:0 6px 6px 0;
+  }
+  .emoji-chip-remove{ border:none; background:none; cursor:pointer; font-family:'Special Elite', monospace; font-size:0.75rem; color:var(--ink-soft); padding:2px 4px; }
+  .emoji-chip-remove:hover{ color:var(--rust); }
 
   @media (max-width:640px){
     .write-grid{ flex-direction:column; }
@@ -261,6 +302,16 @@
           <div class="cover-sub">— since july 2026 —</div>
         </div>
         <div class="sticker-tray" id="stickerTray"></div>
+        <div class="emoji-popover" id="emojiPopover">
+          <button class="emoji-popover-close" id="emojiPopoverClose" type="button" aria-label="close">×</button>
+          <div class="emoji-popover-title">add an emoji sticker</div>
+          <div class="emoji-add-row">
+            <input type="text" id="emojiInput" placeholder="tap here, then open your emoji keyboard" maxlength="8">
+            <button id="emojiAddBtn" type="button">+ add</button>
+          </div>
+          <div class="emoji-hint">Mac: ⌘ + ⌃ + Space &nbsp;·&nbsp; Windows: ⊞ + . (period)</div>
+          <div id="emojiChips"></div>
+        </div>
       </div>
     </section>
 
@@ -294,7 +345,14 @@
             <button id="pageNext">›</button>
             <button id="addPageBtn">+ add page</button>
           </div>
+          <label class="live-toggle">
+            <input type="checkbox" id="liveReflectionToggle" checked>
+            quiet reflections while I write
+          </label>
           <textarea class="entry" id="entryText" placeholder="Recently..."></textarea>
+          <div class="live-reflection" id="liveReflection">
+            <span class="live-reflection-text" id="liveReflectionText"></span>
+          </div>
         </div>
         <div class="write-side">
           <div>
@@ -326,6 +384,7 @@
     <section class="page" id="page-stickers">
       <p class="eyebrow">sticker sheet</p>
       <h1 class="page-title">your stickers</h1>
+
       <div style="font-family:'Special Elite',monospace; font-size:0.75rem; color:var(--ink-soft); max-width:480px;">
         placeholders for now — upload the stickers you've drawn below and they'll fill these slots and show up in the cover tray automatically.
       </div>
@@ -396,7 +455,7 @@ function renderTray(){
   addBtn.type = 'button';
   addBtn.textContent = '+';
   addBtn.title = 'choose or upload more stickers';
-  addBtn.addEventListener('click', ()=> switchTab('stickers'));
+  addBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleEmojiPopover(); });
   tray.appendChild(addBtn);
 }
 renderTray();
@@ -422,6 +481,58 @@ function renderStickerGrid(){
   }
 }
 renderStickerGrid();
+
+function toggleEmojiPopover(){
+  const pop = document.getElementById('emojiPopover');
+  const isOpen = pop.classList.toggle('open');
+  if(isOpen) document.getElementById('emojiInput').focus();
+}
+function closeEmojiPopover(){
+  document.getElementById('emojiPopover').classList.remove('open');
+}
+document.getElementById('emojiPopoverClose').addEventListener('click', closeEmojiPopover);
+document.addEventListener('click', e=>{
+  const pop = document.getElementById('emojiPopover');
+  if(pop.classList.contains('open') && !e.target.closest('.emoji-popover') && !e.target.closest('.tray-add-btn')){
+    closeEmojiPopover();
+  }
+});
+
+function renderEmojiChips(){
+  const box = document.getElementById('emojiChips');
+  box.innerHTML = '';
+  stickerLibrary.filter(s => s.type === 'emoji').forEach(s=>{
+    const chip = document.createElement('span');
+    chip.className = 'emoji-chip';
+    chip.innerHTML = `${s.val} <button type="button" class="emoji-chip-remove" aria-label="remove sticker">×</button>`;
+    chip.querySelector('.emoji-chip-remove').addEventListener('click', ()=>{
+      const idx = stickerLibrary.findIndex(x => x.type === 'emoji' && x.val === s.val);
+      if(idx > -1) stickerLibrary.splice(idx, 1);
+      renderTray();
+      renderEmojiChips();
+      saveState();
+    });
+    box.appendChild(chip);
+  });
+}
+renderEmojiChips();
+
+function addEmojiFromInput(){
+  const input = document.getElementById('emojiInput');
+  const val = input.value.trim();
+  if(!val) return;
+  if(!stickerLibrary.some(s => s.type === 'emoji' && s.val === val)){
+    stickerLibrary.push({type:'emoji', val});
+  }
+  input.value = '';
+  renderTray();
+  renderEmojiChips();
+  saveState();
+}
+document.getElementById('emojiAddBtn').addEventListener('click', addEmojiFromInput);
+document.getElementById('emojiInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ e.preventDefault(); addEmojiFromInput(); }
+});
 
 document.getElementById('stickerUploadTrigger').addEventListener('click', ()=>{
   document.getElementById('stickerUpload').click();
@@ -469,7 +580,8 @@ function saveState(){
     coverTitle: document.getElementById('coverTitle').value,
     fontIdx,
     stickerLibrary,
-    placedStickers
+    placedStickers,
+    liveReflectionsOn: document.getElementById('liveReflectionToggle') ? document.getElementById('liveReflectionToggle').checked : true
   };
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -513,8 +625,13 @@ function loadState(){
   if(Array.isArray(state.stickerLibrary) && state.stickerLibrary.length){
     stickerLibrary = state.stickerLibrary;
   }
+  if(typeof state.liveReflectionsOn === 'boolean'){
+    const toggle = document.getElementById('liveReflectionToggle');
+    if(toggle) toggle.checked = state.liveReflectionsOn;
+  }
   renderTray();
   renderStickerGrid();
+  renderEmojiChips();
   renderCalendar();
   if(Array.isArray(state.placedStickers)){
     state.placedStickers.forEach(placeStickerFromSaved);
@@ -703,6 +820,84 @@ const imgStrip = document.getElementById('imgStrip');
 const imgInput = document.getElementById('imgInput');
 const imgDrop = document.getElementById('imgDrop');
 
+// ---------- live reflections (quiet, occasional noticing while typing) ----------
+let liveReflectionTimer = null;
+let lastReflectedLength = 0;
+let lastReflectionTime = 0;
+let reflectionInFlight = false;
+const LIVE_REFLECTION_MIN_CHARS = 50;
+const LIVE_REFLECTION_MIN_NEW_CHARS = 40;
+const LIVE_REFLECTION_COOLDOWN_MS = 15000;
+const LIVE_REFLECTION_IDLE_MS = 3500;
+
+function resetLiveReflection(){
+  clearTimeout(liveReflectionTimer);
+  lastReflectedLength = entryText.value.length;
+  const el = document.getElementById('liveReflection');
+  el.classList.remove('visible');
+  clearTimeout(el._fadeTimer);
+}
+
+function scheduleLiveReflection(){
+  const toggle = document.getElementById('liveReflectionToggle');
+  if(!toggle || !toggle.checked) return;
+  clearTimeout(liveReflectionTimer);
+  liveReflectionTimer = setTimeout(maybeTriggerLiveReflection, LIVE_REFLECTION_IDLE_MS);
+}
+
+async function maybeTriggerLiveReflection(){
+  const toggle = document.getElementById('liveReflectionToggle');
+  if(!toggle || !toggle.checked || reflectionInFlight) return;
+  const text = entryText.value.trim();
+  if(text.length < LIVE_REFLECTION_MIN_CHARS) return;
+  if(text.length - lastReflectedLength < LIVE_REFLECTION_MIN_NEW_CHARS) return;
+  if(Date.now() - lastReflectionTime < LIVE_REFLECTION_COOLDOWN_MS) return;
+
+  reflectionInFlight = true;
+  lastReflectedLength = text.length;
+  lastReflectionTime = Date.now();
+
+  const snippet = text.slice(-700);
+  const prompt = `You're a gentle, warm friend glancing over someone's shoulder at a personal journal entry they're still in the middle of writing. Offer exactly ONE short, warm, non-clinical noticing about it — under 18 words, no diagnosis, no advice, no questions, no quotation marks, just a soft observation, like a margin note. Text so far:\n\n${snippet}`;
+
+  try{
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 60,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const raw = data.content.map(b => b.text || '').join('').trim();
+    if(raw) showLiveReflection(raw);
+  } catch(e){
+    console.warn('live reflection skipped (quiet failure by design):', e);
+  } finally {
+    reflectionInFlight = false;
+  }
+}
+
+function showLiveReflection(text){
+  const el = document.getElementById('liveReflection');
+  const textEl = document.getElementById('liveReflectionText');
+  textEl.textContent = text.replace(/^["']|["']$/g, '');
+  el.classList.add('visible');
+  clearTimeout(el._fadeTimer);
+  el._fadeTimer = setTimeout(()=>{ el.classList.remove('visible'); }, 14000);
+}
+
+entryText.addEventListener('input', scheduleLiveReflection);
+document.getElementById('liveReflectionToggle').addEventListener('change', (e)=>{
+  if(!e.target.checked){
+    clearTimeout(liveReflectionTimer);
+    document.getElementById('liveReflection').classList.remove('visible');
+  }
+  saveState();
+});
+
 function renderPageIndicator(){
   document.getElementById('pageLabel').textContent = `page ${currentPageIdx+1} of ${entryPages.length}`;
 }
@@ -725,6 +920,7 @@ function loadPage(idx){
   renderImgStrip();
   renderPageIndicator();
   maybeShowSpaceHint();
+  resetLiveReflection();
 }
 document.getElementById('pagePrev').addEventListener('click', ()=>{ if(currentPageIdx>0) loadPage(currentPageIdx-1); });
 document.getElementById('pageNext').addEventListener('click', ()=>{ if(currentPageIdx<entryPages.length-1) loadPage(currentPageIdx+1); });
@@ -783,6 +979,7 @@ function loadTodayEntryIfExists(){
     chip.classList.toggle('selected', selectedTags.has(chip.textContent));
   });
   updateWriteStatus();
+  resetLiveReflection();
 }
 
 document.getElementById('saveBtn').addEventListener('click', ()=>{
