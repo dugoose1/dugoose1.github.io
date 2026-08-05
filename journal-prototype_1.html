@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title> journal :D </title>
+<title>marginalia — journal prototype</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Special+Elite&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Amatic+SC:wght@400;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
@@ -368,7 +368,7 @@
           </div>
           <div class="ai-teaser" id="aiCard">
             <div id="aiIdle">
-              once you've saved a few entries, your journal-keeper can look across all of them for recurring themes, moods, and patterns.
+              once you've saved a few entries, this can scan back through all of them for recurring words, tags, and writing streaks.
               <button class="ai-btn" id="aiAnalyzeBtn">✨ find patterns in my entries</button>
             </div>
             <div id="aiLoading" style="display:none;">reading through your entries…</div>
@@ -1009,20 +1009,56 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-async function runAiAnalysis(){
+function computeLocalPatterns(){
+  const entries = Object.entries(loggedDays).map(([key, val])=>{
+    const text = (val.pages||[]).map(p=>p.text).filter(Boolean).join(' ');
+    return { key, text, tags: val.tags||[] };
+  }).filter(e=>e.text && e.text.trim().length>0);
+
+  if(entries.length === 0) return null;
+
+  const tagCounts = {};
+  entries.forEach(e=> e.tags.forEach(t=>{ tagCounts[t] = (tagCounts[t]||0) + 1; }));
+  const topTags = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,4)
+    .map(([t,c])=>`${t} (${c}×)`);
+
+  const stopwords = new Set(['the','and','a','an','to','of','in','i','it','is','was','were','for','on','that','my','with','this','so','but','have','had','has','be','as','at','me','you','we','they','are','just','like','not','all','about','out','up','if','when','then','than','too','very','really','get','got','went','been','from','some','into','over','also','its','your','our','their']);
+  const wordCounts = {};
+  entries.forEach(e=>{
+    e.text.toLowerCase().replace(/[^a-z'\s]/g,' ').split(/\s+/).forEach(w=>{
+      w = w.trim();
+      if(w.length > 3 && !stopwords.has(w)) wordCounts[w] = (wordCounts[w]||0) + 1;
+    });
+  });
+  const topWords = Object.entries(wordCounts).filter(([,c])=>c>1).sort((a,b)=>b[1]-a[1]).slice(0,5)
+    .map(([w,c])=>`"${w}" (${c}×)`);
+
+  const dates = entries.map(e=>{
+    const [y,m,d] = e.key.split('-').map(Number);
+    return new Date(y,m,d);
+  }).sort((a,b)=>a-b);
+  let longestStreak = 1, currentStreak = 1;
+  for(let i=1;i<dates.length;i++){
+    const diffDays = Math.round((dates[i]-dates[i-1]) / 86400000);
+    if(diffDays === 1){ currentStreak++; longestStreak = Math.max(longestStreak, currentStreak); }
+    else { currentStreak = 1; }
+  }
+
+  const avgWords = Math.round(entries.reduce((s,e)=> s + e.text.split(/\s+/).filter(Boolean).length, 0) / entries.length);
+
+  return { count: entries.length, topTags, topWords, longestStreak, avgWords };
+}
+
+function runAiAnalysis(){
   const idle = document.getElementById('aiIdle');
   const loading = document.getElementById('aiLoading');
   const result = document.getElementById('aiResult');
 
-  const entries = Object.entries(loggedDays).map(([key, val])=>{
-    const text = (val.pages||[]).map(p=>p.text).filter(Boolean).join('\n');
-    return { date:key, text, tags: val.tags||[] };
-  }).filter(e=>e.text && e.text.trim().length>0);
-
   const existingWarning = idle.querySelector('.ai-warning');
   if(existingWarning) existingWarning.remove();
 
-  if(entries.length === 0){
+  const stats = computeLocalPatterns();
+  if(!stats){
     idle.insertAdjacentHTML('beforeend', '<div class="ai-warning" style="color:var(--rust); margin-top:6px;">save at least one written entry first.</div>');
     return;
   }
@@ -1031,31 +1067,16 @@ async function runAiAnalysis(){
   loading.style.display = 'block';
   result.style.display = 'none';
 
-  const entriesText = entries.map(e=>`Date ${e.date} [tags: ${e.tags.join(', ')||'none'}]:\n${e.text}`).join('\n\n---\n\n');
-  const prompt = `You are quietly reading someone's personal journal entries. Here they are:\n\n${entriesText}\n\nRespond ONLY with raw JSON, no markdown fences, in exactly this shape:\n{"themes": ["short theme phrase", "..."], "patterns": ["short pattern or trend observation", "..."], "note": "one warm, non-clinical sentence noticing something, under 25 words"}\nLimit themes to at most 4 and patterns to at most 3.`;
-
-  try{
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
-    const data = await response.json();
-    const raw = data.content.map(b => b.text || '').join('').trim();
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-
+  // brief pause so it doesn't feel instant/robotic — this is real analysis of your entries, just done locally in the browser
+  setTimeout(()=>{
+    const streakNote = stats.longestStreak > 1 ? `, with a ${stats.longestStreak}-day streak at your best` : '';
     result.innerHTML = `
-      <h4>themes</h4>
-      <ul>${(parsed.themes||[]).map(t=>`<li>${escapeHtml(t)}</li>`).join('')}</ul>
-      <h4>patterns</h4>
-      <ul>${(parsed.patterns||[]).map(p=>`<li>${escapeHtml(p)}</li>`).join('')}</ul>
-      ${parsed.note ? `<p style="margin-top:8px; font-style:italic;">${escapeHtml(parsed.note)}</p>` : ''}
-      <button class="ai-retry" id="aiRetryBtn">re-analyze</button>
+      <h4>words you keep coming back to</h4>
+      <ul>${stats.topWords.length ? stats.topWords.map(w=>`<li>${escapeHtml(w)}</li>`).join('') : '<li>no repeated words yet — write a bit more and check again</li>'}</ul>
+      <h4>tags you reach for most</h4>
+      <ul>${stats.topTags.length ? stats.topTags.map(t=>`<li>${escapeHtml(t)}</li>`).join('') : '<li>try tagging your next entry</li>'}</ul>
+      <p style="margin-top:8px; font-style:italic;">${stats.count} ${stats.count===1?'entry':'entries'} logged so far, averaging ${stats.avgWords} words each${streakNote}.</p>
+      <button class="ai-retry" id="aiRetryBtn">check again</button>
     `;
     loading.style.display = 'none';
     result.style.display = 'block';
@@ -1063,12 +1084,7 @@ async function runAiAnalysis(){
       result.style.display = 'none';
       idle.style.display = 'block';
     });
-  } catch(err){
-    loading.style.display = 'none';
-    idle.style.display = 'block';
-    idle.insertAdjacentHTML('beforeend', '<div class="ai-warning" style="color:var(--rust); margin-top:6px;">couldn\'t reach the analysis right now — try again in a moment.</div>');
-    console.error('AI analysis error:', err);
-  }
+  }, 500);
 }
 document.getElementById('aiAnalyzeBtn').addEventListener('click', runAiAnalysis);
 </script>
