@@ -628,14 +628,13 @@
     font-size: 15px;
     color: var(--ink-soft);
   }
-  .pagination a{ text-decoration:none; color: var(--ink-soft); }
-  .pagination a.current{
+  .pagination a, .pagination span{ text-decoration:none; color: var(--ink-soft); cursor: default; }
+  .pagination a.current, .pagination span.current{
     color: var(--vermilion-deep);
     font-weight:600;
     text-decoration: underline;
     text-underline-offset: 3px;
   }
-  .pagination a:hover{ color: var(--vermilion-deep); }
 
   @media (max-width: 640px){
     table.board th.author, table.board td.author,
@@ -868,11 +867,8 @@
     <label class="menu-toggle" for="nav-check">&#9776;</label>
     <nav class="main-links">
       <a href="#about">성당 안내</a>
-      <a href="#news">새소식/알림</a>
       <a href="#">연례행사</a>
-      <a href="#resources">자료실</a>
       <a href="#community">공동체</a>
-      <a href="#faith">신앙 생활</a>
     </nav>
   </div>
 </header>
@@ -1208,117 +1204,6 @@
 </div>
 </section>
 
-<section class="subpage" id="news">
-<div class="page-banner">
-  <h1>새로운 소식과 알림</h1>
-  <span class="en">NEWS &amp; ANNOUNCEMENTS</span>
-</div>
-
-<div class="board-wrap">
-  <div class="board-toolbar">
-    <select aria-label="검색 조건">
-      <option>제목</option>
-      <option>글쓴이</option>
-    </select>
-    <input type="text" placeholder="검색어를 입력하세요">
-    <button type="button">검색</button>
-  </div>
-
-  <table class="board">
-    <tr>
-      <th class="num">번호</th>
-      <th class="title">제목</th>
-      <th class="author">글쓴이</th>
-      <th class="date">날짜</th>
-      <th class="views">조회수</th>
-    </tr>
-    <tr class="row"><td class="num">485</td><td class="title"><a href="#">2026년 9월 둘째주 소식</a></td><td class="author">SRKCC</td><td class="date">2026-09-12</td><td class="views">44</td></tr>
-    <tr class="row"><td class="num">484</td><td class="title"><a href="#">2026년 9월 첫째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-09-04</td><td class="views">111</td></tr>
-    <tr class="row"><td class="num">483</td><td class="title"><a href="#">2026년 8월 다섯째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-08-28</td><td class="views">124</td></tr>
-    <tr class="row"><td class="num">482</td><td class="title"><a href="#">2026년 8월 넷째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-08-21</td><td class="views">175</td></tr>
-    <tr class="row"><td class="num">481</td><td class="title"><a href="#">2026년 8월 넷째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-08-21</td><td class="views">151</td></tr>
-    <tr class="row"><td class="num">480</td><td class="title"><a href="#">2026년 8월 셋째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-08-14</td><td class="views">203</td></tr>
-    <tr class="row"><td class="num">479</td><td class="title"><a href="#">2026년 8월 둘째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-08-07</td><td class="views">240</td></tr>
-    <tr class="row"><td class="num">478</td><td class="title"><a href="#">2026년 8월 첫째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-07-31</td><td class="views">235</td></tr>
-    <tr class="row"><td class="num">477</td><td class="title"><a href="#">2026년 7월 넷째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-07-24</td><td class="views">251</td></tr>
-    <tr class="row"><td class="num">476</td><td class="title"><a href="#">2026년 7월 셋째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-07-16</td><td class="views">297</td></tr>
-    <tr class="row"><td class="num">475</td><td class="title"><a href="#">2026년 7월 둘째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-07-11</td><td class="views">272</td></tr>
-    <tr class="row"><td class="num">474</td><td class="title"><a href="#">2026년 7월 첫째주 소식</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-07-05</td><td class="views">270</td></tr>
-  </table>
-
-  <div class="pagination">
-    <a href="#" class="current">1</a>
-    <a href="#">2</a>
-    <a href="#">3</a>
-    <a href="#">4</a>
-    <a href="#">5</a>
-    <a href="#">6</a>
-    <a href="#">7</a>
-    <a href="#">8</a>
-    <a href="#">9</a>
-    <a href="#">10</a>
-    <a href="#">&rsaquo;</a>
-    <a href="#">&raquo;</a>
-  </div>
-</div>
-</section>
-
-<section class="subpage" id="resources">
-<div class="page-banner">
-  <h1>자료실</h1>
-  <span class="en">RESOURCES</span>
-</div>
-
-<div class="page-body">
-  <aside class="sidebar">
-    <a href="#list" class="active">소공동체 자료</a>
-    <a href="#">온라인 사무실 (각종 양식)</a>
-    <a href="#">주보</a>
-  </aside>
-
-  <div class="content" id="list">
-    <div class="board-meta">전체게시물 <strong>199</strong></div>
-
-    <table class="board">
-      <tr>
-        <th class="num">번호</th>
-        <th class="title">제목</th>
-        <th class="author">글쓴이</th>
-        <th class="date">날짜</th>
-        <th class="views">조회</th>
-      </tr>
-      <tr class="row"><td class="num">199</td><td class="title"><a href="#">2026년 9월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span></td><td class="author">SRKCC</td><td class="date">2026-09-03</td><td class="views">64</td></tr>
-      <tr class="row"><td class="num">198</td><td class="title"><a href="#">2026년 8월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span></td><td class="author">SRKCC</td><td class="date">2026-08-21</td><td class="views">88</td></tr>
-      <tr class="row"><td class="num">197</td><td class="title"><a href="#">2026년 7월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-07-09</td><td class="views">202</td></tr>
-      <tr class="row"><td class="num">196</td><td class="title"><a href="#">2026년 5월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-05-05</td><td class="views">394</td></tr>
-      <tr class="row"><td class="num">195</td><td class="title"><a href="#">2026년 4월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-04-23</td><td class="views">363</td></tr>
-      <tr class="row"><td class="num">194</td><td class="title"><a href="#">2026년 3월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-03-04</td><td class="views">537</td></tr>
-      <tr class="row"><td class="num">193</td><td class="title"><a href="#">2026년 2월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-02-23</td><td class="views">544</td></tr>
-      <tr class="row"><td class="num">192</td><td class="title"><a href="#">2026년 1월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2026-02-23</td><td class="views">493</td></tr>
-      <tr class="row"><td class="num">191</td><td class="title"><a href="#">2025년 11월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2025-11-05</td><td class="views">785</td></tr>
-      <tr class="row"><td class="num">190</td><td class="title"><a href="#">2025년 10월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2025-10-08</td><td class="views">788</td></tr>
-      <tr class="row"><td class="num">189</td><td class="title"><a href="#">2025년 9월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2025-10-08</td><td class="views">773</td></tr>
-      <tr class="row"><td class="num">188</td><td class="title"><a href="#">2025년 8월 소 공동체 반 모임 자료와 공지</a><span class="badge-file">↓</span><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2025-10-08</td><td class="views">726</td></tr>
-    </table>
-
-    <div class="pagination">
-      <a href="#" class="current">1</a>
-      <a href="#">2</a>
-      <a href="#">3</a>
-      <a href="#">4</a>
-      <a href="#">5</a>
-      <a href="#">6</a>
-      <a href="#">7</a>
-      <a href="#">8</a>
-      <a href="#">9</a>
-      <a href="#">10</a>
-      <a href="#">&rsaquo;</a>
-      <a href="#">&raquo;</a>
-    </div>
-  </div>
-</div>
-</section>
-
 <section class="subpage" id="community">
 <div class="page-banner">
   <h1>공동체</h1>
@@ -1421,101 +1306,9 @@
       </div>
     </div>
 
-    <div class="community-news">
-      <h4>공동체 소식</h4>
-      <p>사목협의회, 빈첸시오회 등 각 단체의 최근 소식과 공지사항을 확인하세요.</p>
-      <a href="#news">소식 보기</a>
-    </div>
-
     <div class="quickfoot">
       미사 시간과 오시는 길은 <a href="#mass">홈페이지 미사 안내</a> 및 <a href="#contact">연락처 안내</a>에서 확인하실 수 있습니다.
     </div>
-  </div>
-</div>
-
-<div class="site-infoband">
-  <div class="infoband-inner">
-    <div class="infoband-col">
-      <h4>미사 시간 안내</h4>
-      <table class="mini-mass">
-        <tr><td>평일미사 수/목</td><td class="mtime">7:30 PM</td></tr>
-        <tr><td>평일미사 금</td><td class="mtime">9:30 AM</td></tr>
-        <tr><td>특별미사 토</td><td class="mtime">6:30 PM</td></tr>
-        <tr><td>주일미사 일</td><td class="mtime">8:00 / 10:00 AM</td></tr>
-        <tr><td>주일미사 일</td><td class="mtime">12:00 PM</td></tr>
-      </table>
-      <div class="lang-tags"><span>한국어</span><span>영어(한국어)</span></div>
-    </div>
-    <div class="infoband-col sacrament-list">
-      <h4>성사 안내</h4>
-      <p>성체 현시 : 평일 미사 1시간 전</p>
-      <p>성체 조배 : 매월 첫 목요일 미사 후 24시간</p>
-      <p>고해 성사 : 사무실로 문의</p>
-      <p>교리 성사 : 수 / 목 6:45–7:15 PM</p>
-      <p>혼인 성사 : 혼배 6개월 전 신부님 면담</p>
-      <p class="note">* 정확한 일정은 변동될 수 있으니 사무실로 확인해 주세요.</p>
-    </div>
-    <div class="infoband-col">
-      <h4>오시는 길 · 연락처</h4>
-      <address>
-        12366 Rosecrans Ave<br>
-        Norwalk, CA 90650<br>
-        Tel <a href="tel:5626230700">562.623.0700</a><br>
-        Fax 562.623.0024<br>
-        <a href="mailto:office@straphaelkcc.org">office@straphaelkcc.org</a>
-      </address>
-    </div>
-  </div>
-</div>
-</section>
-
-<section class="subpage" id="faith">
-<div class="page-banner">
-  <h1>신앙생활</h1>
-  <span class="en">FAITH FORMATION</span>
-</div>
-
-<div class="board-wrap">
-  <div class="board-toolbar">
-    <select aria-label="검색 조건">
-      <option>제목</option>
-      <option>글쓴이</option>
-    </select>
-    <input type="text" placeholder="검색어를 입력하세요">
-    <button type="button">검색</button>
-  </div>
-
-  <table class="board">
-    <tr>
-      <th class="num">번호</th>
-      <th class="title">제목</th>
-      <th class="author">글쓴이</th>
-      <th class="date">날짜</th>
-      <th class="views">조회수</th>
-    </tr>
-    <tr class="row"><td class="num">75</td><td class="title"><a href="#">오후 3시에 라파엘 신자들이 참여하는 자비의 미사</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2020-03-19</td><td class="views">9171</td></tr>
-    <tr class="row"><td class="num">74</td><td class="title"><a href="#">본당 성령 안의 새 생활 세미나 안내</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2017-04-13</td><td class="views">7062</td></tr>
-    <tr class="row"><td class="num">73</td><td class="title"><a href="#">제29회 남가주 성령쇄신대회</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2016-05-28</td><td class="views">10849</td></tr>
-    <tr class="row"><td class="num">72</td><td class="title"><a href="#">Small Faith Community (평일 반모임) for English speaking</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2016-05-05</td><td class="views">9856</td></tr>
-    <tr class="row"><td class="num">71</td><td class="title"><a href="#">본헤렐 반 행사</a></td><td class="author">SRKCC</td><td class="date">2016-05-05</td><td class="views">7223</td></tr>
-    <tr class="row"><td class="num">70</td><td class="title"><a href="#">본당 사랑 특강</a></td><td class="author">SRKCC</td><td class="date">2016-02-22</td><td class="views">7367</td></tr>
-    <tr class="row"><td class="num">69</td><td class="title"><a href="#">12월 10일(목) 대림 특강 "기다리는 사람들"</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2015-11-23</td><td class="views">7645</td></tr>
-    <tr class="row"><td class="num">68</td><td class="title"><a href="#">성경 공부 그룹 모집 안내</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2015-08-16</td><td class="views">7783</td></tr>
-    <tr class="row"><td class="num">67</td><td class="title"><a href="#">제15차 요한복음 연수</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2015-07-19</td><td class="views">8654</td></tr>
-    <tr class="row"><td class="num">66</td><td class="title"><a href="#">2016년 부활(3/27) 세례 예비자 교리반 개강</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2015-07-12</td><td class="views">7739</td></tr>
-    <tr class="row"><td class="num">65</td><td class="title"><a href="#">제28회 남가주 성령 쇄신 대회</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2015-06-29</td><td class="views">9675</td></tr>
-    <tr class="row"><td class="num">64</td><td class="title"><a href="#">젊은이들을 위한 KYCR 2015 '성령 안의 새 생활' 세미나</a><span class="badge-hot">H</span></td><td class="author">SRKCC</td><td class="date">2015-06-06</td><td class="views">7871</td></tr>
-  </table>
-
-  <div class="pagination">
-    <a href="#" class="current">1</a>
-    <a href="#">2</a>
-    <a href="#">3</a>
-    <a href="#">4</a>
-    <a href="#">5</a>
-    <a href="#">6</a>
-    <a href="#">7</a>
-    <a href="#">&rsaquo;</a>
   </div>
 </div>
 
